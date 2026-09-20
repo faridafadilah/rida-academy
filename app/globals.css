@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #1f5a76;
+  --brand-dark: #163f59;
+  --brand-light: #e8f3f9;
+  --brand-accent: #f4b942;
+  --brand-soft: #f8f4ee;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: linear-gradient(180deg, #f6f9fb 0%, #f3efe8 100%);
+  color: #1f2937;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(31, 90, 118, 0.2);
+}
