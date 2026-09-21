@@ -16,7 +16,7 @@ export default async function RiwayatPage() {
 
   const { data: absensi } = await supabase
     .from("absensi")
-    .select("*")
+    .select("*, siswa(*)")
     .eq("guru_id", guru.id)
     .order("tanggal", { ascending: false })
     .order("created_at", { ascending: false });
@@ -68,6 +68,9 @@ export default async function RiwayatPage() {
                   </div>
                   <div className="mt-1 font-semibold text-slate-800">
                     {item.mata_pelajaran}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    Siswa: {item.siswa?.nama || "Belum dipilih"}
                   </div>
                 </div>
                 <div className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">

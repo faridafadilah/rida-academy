@@ -23,6 +23,7 @@ export default function NavBar({
   const navItems = [
     { href: "/absen", label: "Absen" },
     { href: "/riwayat", label: "Riwayat" },
+    { href: "/izin", label: "Reschedule / Izin" },
     ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 

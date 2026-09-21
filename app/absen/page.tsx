@@ -16,6 +16,21 @@ export default async function AbsenPage() {
     .eq("guru_id", guru.id)
     .maybeSingle();
 
+  const { data: siswaList } = await supabase
+    .from("guru_siswa")
+    .select("siswa_id, siswa(id, nama, status)")
+    .eq("guru_id", guru.id)
+    .eq("active", true)
+    .order("created_at", { ascending: false });
+
+  const siswaAktif = (siswaList || [])
+    .map((item: any) => item.siswa)
+    .filter(Boolean)
+    .map((siswa: any) => ({
+      id: siswa.id,
+      nama: siswa.nama,
+    }));
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(244,185,66,0.12),transparent_20%),linear-gradient(180deg,#f6f9fb_0%,#f3efe8_100%)]">
       <NavBar
@@ -35,7 +50,7 @@ export default async function AbsenPage() {
           </p>
         </div>
 
-        <AbsenForm guruId={guru.id} />
+        <AbsenForm guruId={guru.id} siswaAktif={siswaAktif} />
       </main>
     </div>
   );

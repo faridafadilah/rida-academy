@@ -42,16 +42,31 @@ type GuruSiswa = {
   siswa: { nama: string; status: string } | null;
 };
 
+type Permintaan = {
+  id: string;
+  guru_id: string;
+  jenis: "reschedule" | "izin";
+  tanggal_rencana: string | null;
+  tanggal_baru: string | null;
+  alasan: string;
+  catatan: string | null;
+  status: string;
+  created_at: string;
+  guru: { nama: string } | null;
+};
+
 export default function AdminPanel({
   daftarGuru,
   absensiTerbaru,
   daftarSiswa,
   guruSiswa,
+  permintaan,
 }: {
   daftarGuru: Guru[];
   absensiTerbaru: Absensi[];
   daftarSiswa: Siswa[];
   guruSiswa: GuruSiswa[];
+  permintaan: Permintaan[];
 }) {
   const router = useRouter();
   const [nama, setNama] = useState("");
@@ -64,6 +79,7 @@ export default function AdminPanel({
   const [linkActive, setLinkActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const handleTambahGuru = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +150,28 @@ export default function AdminPanel({
       setErrorMsg(error.message || "Gagal menyimpan data siswa.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatusPermintaan = async (
+    id: string,
+    status: "approved" | "rejected",
+  ) => {
+    setActionLoadingId(id);
+    const supabase = createClient();
+
+    try {
+      const { error } = await supabase
+        .from("reschedule_izin")
+        .update({ status })
+        .eq("id", id);
+
+      if (error) throw error;
+      router.refresh();
+    } catch (error: any) {
+      setErrorMsg(error.message || "Gagal mengubah status permintaan.");
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -308,6 +346,91 @@ export default function AdminPanel({
               </span>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <h2 className="mb-4 font-semibold">Permintaan Reschedule / Izin</h2>
+        <div className="space-y-4">
+          {permintaan.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-2xl border border-slate-200 p-4"
+            >
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-medium text-slate-800">
+                    {item.guru?.nama} —{" "}
+                    {item.jenis === "reschedule" ? "Reschedule" : "Izin"}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {item.tanggal_rencana
+                      ? new Date(
+                          `${item.tanggal_rencana}T00:00:00`,
+                        ).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "-"}
+                    {item.tanggal_baru
+                      ? ` → ${new Date(
+                          `${item.tanggal_baru}T00:00:00`,
+                        ).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}`
+                      : ""}
+                  </div>
+                </div>
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
+                    item.status === "approved"
+                      ? "bg-emerald-50 text-emerald-700"
+                      : item.status === "rejected"
+                        ? "bg-red-50 text-red-700"
+                        : "bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  {item.status}
+                </span>
+              </div>
+
+              <p className="mt-3 text-sm text-slate-600">{item.alasan}</p>
+              {item.catatan && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Catatan: {item.catatan}
+                </p>
+              )}
+
+              {item.status === "pending" && (
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleStatusPermintaan(item.id, "approved")}
+                    disabled={actionLoadingId === item.id}
+                    className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {actionLoadingId === item.id ? "Memproses..." : "Setujui"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleStatusPermintaan(item.id, "rejected")}
+                    disabled={actionLoadingId === item.id}
+                    className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {actionLoadingId === item.id ? "Memproses..." : "Tolak"}
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          {permintaan.length === 0 && (
+            <p className="text-sm text-slate-500">
+              Belum ada permintaan reschedule atau izin.
+            </p>
+          )}
         </div>
       </section>
 

@@ -23,11 +23,23 @@ function getTodayString() {
   return `${year}-${month}-${day}`;
 }
 
-export default function AbsenForm({ guruId }: { guruId: string }) {
+type SiswaAktif = {
+  id: string;
+  nama: string;
+};
+
+export default function AbsenForm({
+  guruId,
+  siswaAktif,
+}: {
+  guruId: string;
+  siswaAktif: SiswaAktif[];
+}) {
   const router = useRouter();
   const [tanggal, setTanggal] = useState(getTodayString());
   const [jamMulai, setJamMulai] = useState("08:00");
   const [jamSelesai, setJamSelesai] = useState("09:00");
+  const [siswaId, setSiswaId] = useState(siswaAktif[0]?.id || "");
   const [mapel, setMapel] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
@@ -53,6 +65,18 @@ export default function AbsenForm({ guruId }: { guruId: string }) {
 
     if (jamSelesai <= jamMulai) {
       setErrorMsg("Jam selesai harus lebih besar dari jam mulai.");
+      return;
+    }
+
+    if (siswaAktif.length === 0) {
+      setErrorMsg(
+        "Belum ada siswa aktif yang dibimbing. Tambahkan siswa aktif di profil guru terlebih dahulu.",
+      );
+      return;
+    }
+
+    if (!siswaId) {
+      setErrorMsg("Pilih siswa aktif yang dibimbing dulu sebelum absen.");
       return;
     }
 
@@ -86,6 +110,7 @@ export default function AbsenForm({ guruId }: { guruId: string }) {
 
       const { error: insertError } = await supabase.from("absensi").insert({
         guru_id: guruId,
+        siswa_id: siswaId,
         tanggal,
         jam_mulai: jamMulai,
         jam_selesai: jamSelesai,
@@ -100,6 +125,7 @@ export default function AbsenForm({ guruId }: { guruId: string }) {
       setTanggal(getTodayString());
       setJamMulai("08:00");
       setJamSelesai("09:00");
+      setSiswaId(siswaAktif[0]?.id || "");
       setMapel("");
       setDeskripsi("");
       setFoto(null);
@@ -141,14 +167,27 @@ export default function AbsenForm({ guruId }: { guruId: string }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
-            Tanggal absen
+            Siswa aktif yang dibimbing
           </label>
-          <input
-            type="date"
-            value={tanggal}
-            onChange={(e) => setTanggal(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
-          />
+          <select
+            value={siswaId}
+            onChange={(e) => setSiswaId(e.target.value)}
+            disabled={siswaAktif.length === 0}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {siswaAktif.length === 0 ? (
+              <option value="">Belum ada siswa aktif</option>
+            ) : (
+              <>
+                <option value="">Pilih siswa</option>
+                {siswaAktif.map((siswa) => (
+                  <option key={siswa.id} value={siswa.id}>
+                    {siswa.nama}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
         </div>
 
         <div>
@@ -173,6 +212,18 @@ export default function AbsenForm({ guruId }: { guruId: string }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
+            Tanggal absen
+          </label>
+          <input
+            type="date"
+            value={tanggal}
+            onChange={(e) => setTanggal(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
             Jam mulai
           </label>
           <input
@@ -182,18 +233,18 @@ export default function AbsenForm({ guruId }: { guruId: string }) {
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
           />
         </div>
+      </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            Jam selesai
-          </label>
-          <input
-            type="time"
-            value={jamSelesai}
-            onChange={(e) => setJamSelesai(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
-          />
-        </div>
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          Jam selesai
+        </label>
+        <input
+          type="time"
+          value={jamSelesai}
+          onChange={(e) => setJamSelesai(e.target.value)}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+        />
       </div>
 
       <div>

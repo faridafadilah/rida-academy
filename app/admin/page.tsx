@@ -33,12 +33,21 @@ export default async function AdminPage() {
     .select("*, guru(nama), siswa(nama, status)")
     .order("created_at", { ascending: false });
 
+  const { data: permintaan, error: permintaanError } = await supabase
+    .from("reschedule_izin")
+    .select("*, guru(nama)")
+    .order("created_at", { ascending: false });
+
   console.log("[admin page] absensi terbaru:", {
     absensiTerbaru,
     absensiError,
   });
   console.log("[admin page] siswa:", { daftarSiswa, daftarSiswaError });
   console.log("[admin page] guru siswa:", { guruSiswa, guruSiswaError });
+  console.log("[admin page] reschedule izin:", {
+    permintaan,
+    permintaanError,
+  });
 
   const { data: profile } = await supabase
     .from("guru_profile")
@@ -69,6 +78,7 @@ export default async function AdminPage() {
           absensiTerbaru={absensiTerbaru || []}
           daftarSiswa={daftarSiswa || []}
           guruSiswa={guruSiswa || []}
+          permintaan={permintaan || []}
         />
       </main>
     </div>
